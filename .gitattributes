@@ -1,0 +1,10 @@
+# Force git to treat binary files properly across all OSes
+*.jar binary
+*.aar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.keystore binary
+*.jks binary

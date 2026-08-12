@@ -1,0 +1,10 @@
+{
+  "name": "Kühlschrank Scan",
+  "description": "Smarter Vorrats-Manager, Kühlschrank-Scanner & KI-Chef zur Vermeidung von Lebensmittelverschwendung.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

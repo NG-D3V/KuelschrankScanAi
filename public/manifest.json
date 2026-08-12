@@ -1,0 +1,41 @@
+{
+  "name": "Kühlschrank Scan AI",
+  "short_name": "Kühlschrank AI",
+  "description": "KI-gestützter Kühlschrank-Scanner, Vorratsverwaltung, MHD-Ablauf-Erinnerung und Rezept-Generator für unkomplizierten Food Saver.",
+  "id": "/?source=pwa",
+  "scope": "/",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#090d16",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "productivity", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Kühlschrank Foto scannen",
+      "short_name": "Foto Scan",
+      "description": "Scanne deinen Kühlschrank mit KI",
+      "url": "/?tab=scan"
+    },
+    {
+      "name": "KI Rezept Generator",
+      "short_name": "Rezepte",
+      "description": "Koche leckere Gerichte aus deinen Vorräten",
+      "url": "/?tab=recipes"
+    }
+  ]
+}

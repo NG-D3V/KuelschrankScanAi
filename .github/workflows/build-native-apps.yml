@@ -1,0 +1,89 @@
+name: Build Native Android App (Capacitor)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type (debug or release)'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  # ==========================================
+  # Android Native APK/AAB Build
+  # ==========================================
+  build-android:
+    name: Build Android App (Capacitor)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment (Node 22)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Setup Java Development Kit (JDK 21)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Install Project Dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Build Web Application (Vite/PWA)
+        run: npm run build
+
+      - name: Add Android Platform (if missing) & Sync Capacitor
+        run: |
+          if [ ! -d "android" ]; then
+            npm install @capacitor/android
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Inject Native Android Permissions
+        run: node scripts/inject-android-permissions.js
+
+      - name: Verify and Fix Gradle Wrapper JAR
+        run: |
+          mkdir -p android/gradle/wrapper
+          if [ ! -f "android/gradle/wrapper/gradle-wrapper.jar" ] || ! jar tf android/gradle/wrapper/gradle-wrapper.jar > /dev/null 2>&1; then
+            echo "⚠️ gradle-wrapper.jar missing or corrupt. Downloading official Gradle wrapper jar..."
+            curl -sSL "https://raw.githubusercontent.com/gradle/gradle/v8.14.3/gradle/wrapper/gradle-wrapper.jar" -o android/gradle/wrapper/gradle-wrapper.jar
+          fi
+
+      - name: Grant Execute Permission for Gradle Wrapper
+        run: chmod +x android/gradlew
+
+      - name: Build Android Debug APK
+        if: ${{ inputs.build_type != 'release' }}
+        run: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Build Android Release Bundle (AAB)
+        if: ${{ inputs.build_type == 'release' }}
+        run: |
+          cd android
+          ./gradlew bundleRelease --stacktrace
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
