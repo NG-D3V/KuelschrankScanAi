@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "Group": {
+      "title": "Group",
+      "description": "A group or household sharing a fridge inventory",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "locations": {
+          "type": "array"
+        },
+        "createdBy": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "members": {
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "locations"
+      ]
+    },
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "An item stored in a group inventory",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "mhd": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "location": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "categoryIcon": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "barcode": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "groupId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "isEinlagerung": {
+          "type": "boolean"
+        },
+        "isOpen": {
+          "type": "boolean"
+        },
+        "openedDate": {
+          "type": "string",
+          "maxLength": 30
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "mhd",
+        "location",
+        "quantity",
+        "groupId"
+      ]
+    }
+  },
+  "firestore": {
+    "/groups/{groupId}": {
+      "schema": {
+        "$ref": "#/entities/Group"
+      },
+      "description": "Shared household groups"
+    },
+    "/groups/{groupId}/items/{itemId}": {
+      "schema": {
+        "$ref": "#/entities/InventoryItem"
+      },
+      "description": "Inventory items belonging to a specific group"
+    }
+  }
+}

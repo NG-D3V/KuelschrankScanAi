@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppSettings, InventoryItem } from '../types';
-import { ArrowLeft, Download, Upload, RefreshCw, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Download, Upload, RefreshCw, Check, AlertCircle, Cloud, User as UserIcon, LogOut, LogIn } from 'lucide-react';
+import { auth, loginWithGoogle, logoutUser } from '../services/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 interface SetupViewProps {
   settings: AppSettings;
@@ -18,6 +20,35 @@ export const SetupView: React.FC<SetupViewProps> = ({
   onGoBack,
 }) => {
   const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
+  const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setCurrentUser(u);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleGoogleAuth = async () => {
+    setAuthLoading(true);
+    try {
+      if (currentUser && !currentUser.isAnonymous) {
+        await logoutUser();
+      } else {
+        await loginWithGoogle();
+      }
+    } catch (err: any) {
+      if (
+        err?.code !== 'auth/popup-closed-by-user' &&
+        err?.code !== 'auth/cancelled-popup-request'
+      ) {
+        console.warn('Auth operation error:', err?.message || err);
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   const toggleSetting = (key: keyof AppSettings) => {
     setSettings((prev) => ({
@@ -239,6 +270,56 @@ export const SetupView: React.FC<SetupViewProps> = ({
           </button>
         )}
         <h1 className="text-3xl font-extrabold text-[#f0f4ef] tracking-tight">Einstellungen</h1>
+      </div>
+
+      {/* Firebase Cloud Sync Card */}
+      <div className="bg-[#232a23] rounded-3xl p-5 border border-[#2e372e] space-y-4 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Cloud className="w-5 h-5 text-[#a4ef72]" />
+            <h2 className="text-[#a4ef72] text-sm font-bold tracking-wide">Firebase Cloud-Sync</h2>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#1e4e12] text-[#a4ef72] border border-[#a4ef72]/30">
+            <span className="w-2 h-2 rounded-full bg-[#9fe870] animate-pulse"></span>
+            Aktiv
+          </span>
+        </div>
+
+        <div className="bg-[#181d18] rounded-2xl p-4 border border-[#2e372e] space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#2a3429] flex items-center justify-center text-[#a4ef72] shrink-0 font-bold">
+              {currentUser?.photoURL ? (
+                <img src={currentUser.photoURL} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <UserIcon className="w-5 h-5" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-[#8f9d8e]">Status / Konto</p>
+              <p className="text-sm font-bold text-[#f0f4ef] truncate">
+                {currentUser && !currentUser.isAnonymous
+                  ? currentUser.email || currentUser.displayName || 'Google Konto'
+                  : 'Anonyme Cloud-Session (Aktiv)'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleGoogleAuth}
+            disabled={authLoading}
+            className="w-full py-2.5 px-4 rounded-xl bg-[#283228] border border-[#3e4d3c] text-[#f0f4ef] font-bold text-xs hover:bg-[#323d32] transition flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {currentUser && !currentUser.isAnonymous ? (
+              <>
+                <LogOut className="w-4 h-4 text-red-400" /> Abmelden
+              </>
+            ) : (
+              <>
+                <LogIn className="w-4 h-4 text-[#a4ef72]" /> Mit Google anmelden
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Settings Options List */}

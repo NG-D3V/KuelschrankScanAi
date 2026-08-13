@@ -20,6 +20,9 @@ export interface Group {
   isCurrent: boolean;
   locations: string[];
   isJoined?: boolean;
+  firebaseName?: string;
+  username?: string;
+  password?: string;
 }
 
 export interface AppSettings {

@@ -7,6 +7,13 @@ import { InventarView } from './components/InventarView';
 import { GruppeView } from './components/GruppeView';
 import { SetupView } from './components/SetupView';
 import { ScannerPage } from './components/ScannerPage';
+import {
+  ensureAuth,
+  subscribeToGroupItems,
+  saveItemToFirebase,
+  deleteItemFromFirebase,
+  saveGroupToFirebase,
+} from './services/firebase';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<MainTabType>('inventar');
@@ -27,6 +34,75 @@ export default function App() {
     return data.map((item, index) => ({ ...item, id: item.id || `inv-fallback-${Date.now()}-${index}` }));
   });
 
+  const currentGroup = groups.find((g) => g.isCurrent) || groups[0] || INITIAL_GROUPS[0];
+
+  // Initialize Firebase Auth on Mount
+  useEffect(() => {
+    ensureAuth().catch((err) => console.error('Firebase Auth init error:', err));
+  }, []);
+
+  // Subscribe to real-time Cloud Firestore updates ONLY if active group is joined (Cloud mode)
+  useEffect(() => {
+    if (!currentGroup?.id || !currentGroup.isJoined) return;
+
+    // Save initial group structure to cloud
+    saveGroupToFirebase(currentGroup).catch(console.error);
+
+    const unsubscribe = subscribeToGroupItems(
+      currentGroup.id,
+      (cloudItems) => {
+        if (cloudItems && cloudItems.length > 0) {
+          setInventory((prev) => {
+            const itemsOtherGroups = prev.filter(
+              (it) => it.groupId !== currentGroup.id && Boolean(it.groupId)
+            );
+            return [...itemsOtherGroups, ...cloudItems];
+          });
+        }
+      },
+      (err) => {
+        console.warn('Firestore subscription fallback:', err);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [currentGroup?.id, currentGroup?.isJoined]);
+
+  // Wrapped setInventory with optional Firebase automatic sync (only for joined cloud groups)
+  const updateInventory: React.Dispatch<React.SetStateAction<InventoryItem[]>> = (action) => {
+    setInventory((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+
+      if (!currentGroup?.isJoined) {
+        return next;
+      }
+
+      const groupId = currentGroup.id;
+      const prevGroupItems = prev.filter((it) => it.groupId === groupId || (!it.groupId && groupId === 'group-1'));
+      const nextGroupItems = next.filter((it) => it.groupId === groupId || (!it.groupId && groupId === 'group-1'));
+
+      // Sync additions and edits
+      nextGroupItems.forEach((item) => {
+        const itemWithGroup = { ...item, groupId };
+        const prevItem = prevGroupItems.find((p) => p.id === item.id);
+        if (!prevItem || JSON.stringify(prevItem) !== JSON.stringify(itemWithGroup)) {
+          saveItemToFirebase(groupId, itemWithGroup).catch(console.error);
+        }
+      });
+
+      // Sync deletions
+      prevGroupItems.forEach((prevItem) => {
+        if (!nextGroupItems.some((n) => n.id === prevItem.id)) {
+          deleteItemFromFirebase(groupId, prevItem.id).catch(console.error);
+        }
+      });
+
+      return next;
+    });
+  };
+
   // Sync to LocalStorage
   useEffect(() => {
     saveToLocalStorage('kuehlschrank_groups', groups);
@@ -40,8 +116,6 @@ export default function App() {
     saveToLocalStorage('kuehlschrank_inventory', inventory);
   }, [inventory]);
 
-  const currentGroup = groups.find((g) => g.isCurrent) || groups[0] || INITIAL_GROUPS[0];
-
   return (
     <div className="min-h-screen bg-[#161a16] text-[#e4ebe2] font-sans antialiased flex flex-col px-4 pt-3 pb-20 selection:bg-[#9fe870] selection:text-[#122108]">
       {/* Main Screen Views */}
@@ -49,7 +123,7 @@ export default function App() {
         {activeTab === 'inventar' && (
           <InventarView
             inventory={inventory}
-            setInventory={setInventory}
+            setInventory={updateInventory}
             currentGroup={currentGroup}
             settings={settings}
             onOpenScanner={() => setActiveTab('scanner')}
@@ -65,7 +139,7 @@ export default function App() {
             settings={settings}
             setSettings={setSettings}
             inventory={inventory}
-            setInventory={setInventory}
+            setInventory={updateInventory}
             onGoBack={() => setActiveTab('inventar')}
           />
         )}
@@ -73,7 +147,7 @@ export default function App() {
           <ScannerPage
             onClose={() => setActiveTab('inventar')}
             onAddItem={(item) => {
-              setInventory((prev) => {
+              updateInventory((prev) => {
                 const existingIndex = prev.findIndex(
                   (existing) =>
                     existing.groupId === item.groupId &&
