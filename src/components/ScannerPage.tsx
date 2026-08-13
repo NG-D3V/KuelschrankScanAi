@@ -628,11 +628,13 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                 <form onSubmit={(e) => { e.preventDefault(); if (manualBarcode.trim()) fetchProductFromBarcode(manualBarcode); }} className="flex gap-2">
                   <input
                     type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="Manuelle EAN..."
                     value={manualBarcode}
                     onFocus={(e) => e.target.select()}
                     onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-                    onChange={(e) => setManualBarcode(e.target.value)}
+                    onChange={(e) => setManualBarcode(e.target.value.replace(/\D/g, ''))}
                     className="flex-1 bg-[#161a16] border border-[#3e4d3c] rounded-2xl px-4 py-3 text-sm text-[#f0f4ef] focus:border-[#9fe870]"
                   />
                   <button type="submit" disabled={isAnalyzing} className="px-5 py-3 rounded-2xl bg-[#2a3229] text-[#f0f4ef] font-bold hover:bg-[#3e4d3c] transition disabled:opacity-50">Suchen</button>
@@ -799,7 +801,8 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                   <input
                     ref={mhdInputRef}
                     type="text"
-                    inputMode="decimal"
+                    inputMode="numeric"
+                    pattern="[0-9.]*"
                     value={mhdInputText}
                     onFocus={(e) => e.target.select()}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); handleMhdTextBlur(); } }}

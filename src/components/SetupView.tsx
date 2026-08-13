@@ -26,10 +26,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
     }));
   };
 
-  const handleNumberChange = (key: 'daysOrangeExpiry' | 'daysRedExpiry' | 'daysOrangeInFridge' | 'daysRedInFridge', value: number | '') => {
+  const handleNumberChange = (key: 'daysOrangeExpiry' | 'daysRedExpiry' | 'daysOrangeInFridge' | 'daysRedInFridge', valStr: string) => {
+    const cleaned = valStr.replace(/\D/g, '');
+    const num = cleaned === '' ? 0 : parseInt(cleaned, 10);
     setSettings((prev) => ({
       ...prev,
-      [key]: (typeof value === 'number' && value >= 0) ? value : 0,
+      [key]: num,
     }));
   };
 
@@ -293,7 +295,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             value={settings.daysOrangeExpiry}
             onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-            onChange={(e) => handleNumberChange('daysOrangeExpiry', e.target.value === '' ? '' : (isNaN(parseInt(e.target.value, 10)) ? '' : parseInt(e.target.value, 10)))}
+            onChange={(e) => handleNumberChange('daysOrangeExpiry', e.target.value)}
             className="w-16 h-12 bg-[#171b17] border border-[#3e4d3c] rounded-xl text-center text-sm font-bold text-[#f0f4ef] focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 shrink-0"
           />
         </div>
@@ -316,7 +318,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             value={settings.daysRedExpiry ?? 3}
             onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-            onChange={(e) => handleNumberChange('daysRedExpiry', e.target.value === '' ? '' : (isNaN(parseInt(e.target.value, 10)) ? '' : parseInt(e.target.value, 10)))}
+            onChange={(e) => handleNumberChange('daysRedExpiry', e.target.value)}
             className="w-16 h-12 bg-[#171b17] border border-[#3e4d3c] rounded-xl text-center text-sm font-bold text-[#f0f4ef] focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 shrink-0"
           />
         </div>
@@ -339,7 +341,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             value={settings.daysOrangeInFridge ?? 5}
             onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-            onChange={(e) => handleNumberChange('daysOrangeInFridge', e.target.value === '' ? '' : (isNaN(parseInt(e.target.value, 10)) ? '' : parseInt(e.target.value, 10)))}
+            onChange={(e) => handleNumberChange('daysOrangeInFridge', e.target.value)}
             className="w-16 h-12 bg-[#171b17] border border-[#3e4d3c] rounded-xl text-center text-sm font-bold text-[#f0f4ef] focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 shrink-0"
           />
         </div>
@@ -362,7 +364,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             value={settings.daysRedInFridge ?? 10}
             onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-            onChange={(e) => handleNumberChange('daysRedInFridge', e.target.value === '' ? '' : (isNaN(parseInt(e.target.value, 10)) ? '' : parseInt(e.target.value, 10)))}
+            onChange={(e) => handleNumberChange('daysRedInFridge', e.target.value)}
             className="w-16 h-12 bg-[#171b17] border border-[#3e4d3c] rounded-xl text-center text-sm font-bold text-[#f0f4ef] focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 shrink-0"
           />
         </div>
