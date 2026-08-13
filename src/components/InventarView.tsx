@@ -37,7 +37,10 @@ export const InventarView: React.FC<InventarViewProps> = ({
       .filter((item) => {
         const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesLocation = selectedLocation === 'Alle' || item.location === selectedLocation;
-        const matchesCategory = !selectedCategory || item.categoryIcon === selectedCategory;
+        const matchesCategory =
+          !selectedCategory ||
+          item.category === selectedCategory ||
+          item.categoryIcon === selectedCategory;
         return matchesSearch && matchesLocation && matchesCategory;
       })
       .sort((a, b) => {
@@ -132,7 +135,18 @@ export const InventarView: React.FC<InventarViewProps> = ({
     setEditingItem(null);
   };
 
-  const categoryEmojis = ['🥩', '🧀', '🥦', '🍎', '🥫', '🍪', '🥨', '🍬', '🍞'];
+  const categoryFilters = [
+    { key: 'milchprodukte', label: 'Milch', icon: '🧀' },
+    { key: 'gemuese_obst', label: 'Obst & Gemüse', icon: '🥦' },
+    { key: 'fleisch_fisch', label: 'Fleisch/Fisch', icon: '🥩' },
+    { key: 'saucen_dips', label: 'Saucen', icon: '🥫' },
+    { key: 'getraenke', label: 'Getränke', icon: '🧃' },
+    { key: 'vorrat_trocken', label: 'Trockenvorrat', icon: '🍞' },
+    { key: 'suessigkeiten', label: 'Süßes', icon: '🍬' },
+    { key: 'snacks_salzig', label: 'Salziges', icon: '🥨' },
+    { key: 'tiefkuehl', label: 'Tiefkühl', icon: '🧊' },
+    { key: 'sonstiges', label: 'Sonstiges', icon: '📦' },
+  ];
 
   return (
     <div className="space-y-4 pb-28 max-w-lg mx-auto relative">
@@ -226,6 +240,7 @@ export const InventarView: React.FC<InventarViewProps> = ({
           placeholder="Im Inventar suchen..."
           value={searchQuery}
           onFocus={(e) => e.target.select()}
+          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full bg-[#232a23] border border-[#2e372e] rounded-2xl pl-11 pr-4 py-3 text-sm text-[#f0f4ef] placeholder-[#8f9d8e] focus:outline-none focus:border-[#9fe870]"
         />
@@ -249,7 +264,7 @@ export const InventarView: React.FC<InventarViewProps> = ({
               : 'bg-[#232a23] text-[#c2cebf] border border-[#2e372e] hover:bg-[#283028]'
           }`}
         >
-          Alle
+          Alle Orte
         </button>
 
         {currentGroup.locations.map((loc) => {
@@ -270,21 +285,34 @@ export const InventarView: React.FC<InventarViewProps> = ({
         })}
       </div>
 
-      {/* Category Emoji Circles */}
-      <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
-        {categoryEmojis.map((emoji) => {
-          const isSelected = selectedCategory === emoji;
+      {/* Category Pills Bar (Clear Emojis + Labels, fully visible & scrollable) */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <button
+          onClick={() => setSelectedCategory(null)}
+          className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1 cursor-pointer shrink-0 ${
+            !selectedCategory
+              ? 'bg-[#1e4e12] text-[#9fe870] border border-[#9fe870] shadow-sm'
+              : 'bg-[#232a23] text-[#c2cebf] border border-[#2e372e] hover:bg-[#283028]'
+          }`}
+        >
+          <span>🏷️</span>
+          <span>Alle Kat.</span>
+        </button>
+
+        {categoryFilters.map((cat) => {
+          const isSelected = selectedCategory === cat.key;
           return (
             <button
-              key={emoji}
-              onClick={() => setSelectedCategory(isSelected ? null : emoji)}
-              className={`w-11 h-11 rounded-full flex items-center justify-center text-lg shrink-0 border transition cursor-pointer ${
+              key={cat.key}
+              onClick={() => setSelectedCategory(isSelected ? null : cat.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer shrink-0 ${
                 isSelected
-                  ? 'bg-[#1e4e12] border-[#9fe870] scale-105 shadow-md'
-                  : 'bg-[#232a23] border-[#2e372e] hover:bg-[#283028]'
+                  ? 'bg-[#1e4e12] text-[#9fe870] border border-[#9fe870] shadow-sm'
+                  : 'bg-[#232a23] text-[#c2cebf] border border-[#2e372e] hover:bg-[#283028]'
               }`}
             >
-              {emoji}
+              <span>{cat.icon}</span>
+              <span>{cat.label}</span>
             </button>
           );
         })}
@@ -318,10 +346,17 @@ export const InventarView: React.FC<InventarViewProps> = ({
                   )}
                 </div>
 
-                <div className="min-w-0 space-y-0.5">
-                  <h3 className="text-sm font-bold text-[#f0f4ef] leading-tight truncate">
-                    {item.name}
-                  </h3>
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-[#f0f4ef] leading-tight truncate">
+                      {item.name}
+                    </h3>
+                    {item.isOpen && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 shrink-0">
+                        🔓 Offen
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1.5 text-xs">
                     <span className={getMhdColorClass(item)}>{getMhdDisplayText(item)}</span>
                   </div>
@@ -425,10 +460,24 @@ export const InventarView: React.FC<InventarViewProps> = ({
                   required
                   value={editingItem.name}
                   onFocus={(e) => e.target.select()}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                   onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
                   className="w-full bg-[#161a16] border border-[#3e4d3c] rounded-2xl px-4 py-2.5 text-sm text-[#f0f4ef]"
                 />
               </div>
+
+              {/* Toggle Open Status Button */}
+              <button
+                type="button"
+                onClick={() => setEditingItem({ ...editingItem, isOpen: !editingItem.isOpen })}
+                className={`w-full py-2.5 px-4 rounded-2xl border text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                  editingItem.isOpen
+                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                    : 'bg-[#161a16] text-[#8f9d8e] border-[#3e4d3c] hover:text-[#f0f4ef]'
+                }`}
+              >
+                {editingItem.isOpen ? '🔓 Produkt ist als GEÖFFNET markiert' : '🔒 Als geöffnet markieren'}
+              </button>
 
               {/* Small EAN Display */}
               <div className="flex items-center gap-2">
@@ -453,6 +502,8 @@ export const InventarView: React.FC<InventarViewProps> = ({
                         saucen_dips: '🥫',
                         getraenke: '🧃',
                         vorrat_trocken: '🍞',
+                        suessigkeiten: '🍬',
+                        snacks_salzig: '🥨',
                         tiefkuehl: '🧊',
                         sonstiges: '📦',
                       };
@@ -470,6 +521,8 @@ export const InventarView: React.FC<InventarViewProps> = ({
                     <option value="saucen_dips">🥫 Saucen & Dips</option>
                     <option value="getraenke">🧃 Getränke</option>
                     <option value="vorrat_trocken">🍞 Trockenvorrat</option>
+                    <option value="suessigkeiten">🍬 Süßigkeiten & Süßes</option>
+                    <option value="snacks_salzig">🥨 Knabbereien & Salziges</option>
                     <option value="tiefkuehl">🧊 Tiefkühl</option>
                     <option value="sonstiges">📦 Sonstiges</option>
                   </select>

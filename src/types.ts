@@ -7,6 +7,8 @@ export type CategoryType =
   | 'saucen_dips'
   | 'getraenke'
   | 'vorrat_trocken'
+  | 'suessigkeiten'
+  | 'snacks_salzig'
   | 'tiefkuehl'
   | 'sonstiges';
 
@@ -41,6 +43,8 @@ export interface InventoryItem {
   barcode?: string;
   groupId: string;
   isEinlagerung?: boolean;
+  isOpen?: boolean;
+  openedDate?: string;
 }
 
 export interface ScannedItemCandidate {

@@ -21,7 +21,8 @@ import {
   Tag,
   AlertCircle,
   Edit3,
-  Zap
+  Zap,
+  Plus
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
@@ -641,6 +642,7 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                     placeholder="Manuelle EAN..."
                     value={manualBarcode}
                     onFocus={(e) => e.target.select()}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                     onChange={(e) => setManualBarcode(e.target.value)}
                     className="flex-1 bg-[#161a16] border border-[#3e4d3c] rounded-2xl px-4 py-3 text-sm text-[#f0f4ef] focus:border-[#9fe870]"
                   />
@@ -738,7 +740,7 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                   <select
                     value={productData.category}
                     onChange={(e) => {
-                      const val = e.target.value;
+                      const cat = e.target.value;
                       const icons: Record<string, string> = {
                         milchprodukte: '🧀',
                         gemuese_obst: '🥦',
@@ -746,14 +748,25 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                         saucen_dips: '🥫',
                         getraenke: '🧃',
                         vorrat_trocken: '🍞',
+                        suessigkeiten: '🍬',
+                        snacks_salzig: '🥨',
                         tiefkuehl: '🧊',
                         sonstiges: '📦'
                       };
-                      setProductData({ ...productData, category: val, categoryIcon: icons[val] || '📦' });
+                      setProductData({ ...productData, category: cat, categoryIcon: icons[cat] || '📦' });
                     }}
                     className="w-full bg-[#232a23] border border-[#3e4d3c] rounded-xl px-2 py-2.5 text-xs text-[#f0f4ef] focus:border-[#9fe870] outline-none"
                   >
-                    <option value="milchprodukte">🧀 Milchprodukte</option><option value="gemuese_obst">🥦 Gemüse & Obst</option><option value="fleisch_fisch">🥩 Fleisch & Fisch</option><option value="saucen_dips">🥫 Saucen & Dips</option><option value="getraenke">🧃 Getränke</option><option value="vorrat_trocken">🍞 Trockenvorrat</option><option value="tiefkuehl">🧊 Tiefkühl</option><option value="sonstiges">📦 Sonstiges</option>
+                    <option value="milchprodukte">🧀 Milchprodukte</option>
+                    <option value="gemuese_obst">🥦 Gemüse & Obst</option>
+                    <option value="fleisch_fisch">🥩 Fleisch & Fisch</option>
+                    <option value="saucen_dips">🥫 Saucen & Dips</option>
+                    <option value="getraenke">🧃 Getränke</option>
+                    <option value="vorrat_trocken">🍞 Trockenvorrat</option>
+                    <option value="suessigkeiten">🍬 Süßigkeiten & Süßes</option>
+                    <option value="snacks_salzig">🥨 Knabbereien & Salziges</option>
+                    <option value="tiefkuehl">🧊 Tiefkühl</option>
+                    <option value="sonstiges">📦 Sonstiges</option>
                   </select>
                 </div>
                 <div className="space-y-1">
@@ -797,8 +810,11 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                   <input
                     ref={mhdInputRef}
                     type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={mhdInputText}
                     onFocus={(e) => e.target.select()}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                     onChange={(e) => setMhdInputText(e.target.value)}
                     onBlur={handleMhdTextBlur}
                     placeholder="24.08.2026"
@@ -955,29 +971,58 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                handleMhdTextBlur();
-                const parsed = parseFlexibleDateInput(mhdInputText);
-                const finalDate = parsed.isoDate || mhdDate;
-                
-                onAddItem({
-                  name: productData.name || 'Artikel',
-                  mhd: finalDate,
-                  location: selectedLocation,
-                  quantity: 1,
-                  imageUrl: productData.imageUrl,
-                  category: productData.category,
-                  categoryIcon: productData.categoryIcon || '📦',
-                  barcode: productData.barcode,
-                  groupId: currentGroupId,
-                });
-                onClose();
-              }}
-              className="w-full py-4 rounded-2xl bg-[#9fe870] text-[#122108] font-black text-sm hover:bg-[#8ddb5a] transition cursor-pointer shadow-xl shadow-[#9fe870]/20 flex items-center justify-center gap-2 active:scale-95"
-            >
-              <Check className="w-5 h-5" /> In den {selectedLocation} legen
-            </button>
+            <div className="space-y-2.5">
+              <button
+                onClick={() => {
+                  handleMhdTextBlur();
+                  const parsed = parseFlexibleDateInput(mhdInputText);
+                  const finalDate = parsed.isoDate || mhdDate;
+                  
+                  onAddItem({
+                    name: productData.name || 'Artikel',
+                    mhd: finalDate,
+                    location: selectedLocation,
+                    quantity: 1,
+                    imageUrl: productData.imageUrl,
+                    category: productData.category,
+                    categoryIcon: productData.categoryIcon || '📦',
+                    barcode: productData.barcode,
+                    groupId: currentGroupId,
+                  });
+                  onClose();
+                }}
+                className="w-full py-4 rounded-2xl bg-[#9fe870] text-[#122108] font-black text-sm hover:bg-[#8ddb5a] transition cursor-pointer shadow-xl shadow-[#9fe870]/20 flex items-center justify-center gap-2 active:scale-95"
+              >
+                <Check className="w-5 h-5" /> In {selectedLocation} legen
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  handleMhdTextBlur();
+                  const parsed = parseFlexibleDateInput(mhdInputText);
+                  const finalDate = parsed.isoDate || mhdDate;
+                  
+                  onAddItem({
+                    name: productData.name || 'Artikel',
+                    mhd: finalDate,
+                    location: selectedLocation,
+                    quantity: 1,
+                    imageUrl: productData.imageUrl,
+                    category: productData.category,
+                    categoryIcon: productData.categoryIcon || '📦',
+                    barcode: productData.barcode,
+                    groupId: currentGroupId,
+                  });
+
+                  setMhdInputText('');
+                  setMhdOcrFeedback('✅ Artikel gespeichert! Gib nun das kürzere MHD für das weitere Produkt ein.');
+                }}
+                className="w-full py-3.5 rounded-2xl bg-[#232a23] border border-[#3e4d3c] text-[#f0f4ef] font-bold text-xs hover:border-[#9fe870] transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+              >
+                <Plus className="w-4 h-4 text-[#9fe870]" /> Gleiches Produkt mit anderem MHD (kürzer)
+              </button>
+            </div>
           </div>
         )}
 

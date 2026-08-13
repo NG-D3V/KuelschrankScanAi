@@ -36,13 +36,25 @@ export const CATEGORY_CONFIG: Record<
   },
   vorrat_trocken: {
     label: 'Vorrat & Trockenes',
-    icon: '🌾',
+    icon: '🍞',
     colorClass: 'text-yellow-400',
     bgClass: 'bg-yellow-500/10 border-yellow-500/20',
   },
+  suessigkeiten: {
+    label: 'Süßigkeiten & Süßes',
+    icon: '🍬',
+    colorClass: 'text-pink-400',
+    bgClass: 'bg-pink-500/10 border-pink-500/20',
+  },
+  snacks_salzig: {
+    label: 'Knabbereien & Salziges',
+    icon: '🥨',
+    colorClass: 'text-amber-400',
+    bgClass: 'bg-amber-500/10 border-amber-500/20',
+  },
   tiefkuehl: {
     label: 'Tiefkühlware',
-    icon: '❄️',
+    icon: '🧊',
     colorClass: 'text-cyan-400',
     bgClass: 'bg-cyan-500/10 border-cyan-500/20',
   },
@@ -123,7 +135,13 @@ export function detectCategoryAndIcon(name: string): { category: CategoryType; c
   if (/saft|wasser|cola|fanta|sprite|bier|wein|limo|limonade|tee|kaffee|energy|eistee|drink|spezi|radler/.test(lower)) {
     return { category: 'getraenke', categoryIcon: '🧃' };
   }
-  if (/brot|brötchen|broetchen|mehl|zucker|nudeln|pasta|reis|haferflocken|müsli|muesli|kekse|keks|schokolade|nüsse|nuesse|chips|toast|croissant|zwieback|spaghetti|maccaroni/.test(lower)) {
+  if (/schokolade|bonbon|gummibärchen|gummibaerchen|keks|kekse|kuchen|muffin|praline|nutella|pudding|süß|suess|haribo|kinder|m&m|twix|snickers|mars|kitkat/.test(lower)) {
+    return { category: 'suessigkeiten', categoryIcon: '🍬' };
+  }
+  if (/chips|flips|nüsse|nuesse|erdnüsse|erdnuesse|salzstangen|popcorn|cracker|snack|nachos|brezel|salzig|pringles|doritos/.test(lower)) {
+    return { category: 'snacks_salzig', categoryIcon: '🥨' };
+  }
+  if (/brot|brötchen|broetchen|mehl|zucker|nudeln|pasta|reis|haferflocken|müsli|muesli|toast|croissant|zwieback|spaghetti|maccaroni/.test(lower)) {
     return { category: 'vorrat_trocken', categoryIcon: '🍞' };
   }
   if (/tiefkühl|tiefkuehl|tk|eis|speiseeis|pizza|pommes|frozen|gefroren/.test(lower)) {
