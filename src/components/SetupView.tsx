@@ -33,6 +33,70 @@ export const SetupView: React.FC<SetupViewProps> = ({
     }));
   };
 
+  // Robust CSV Cell Escaper
+  const escapeCsvCell = (val: any): string => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  // Quote-aware CSV Parser Function
+  const parseCsvText = (text: string): string[][] => {
+    const cleanText = text.replace(/^\uFEFF/, '');
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    const firstLine = cleanText.split('\n')[0] || '';
+    const delimiter = (firstLine.match(/;/g) || []).length >= (firstLine.match(/,/g) || []).length ? ';' : ',';
+
+    for (let i = 0; i < cleanText.length; i++) {
+      const char = cleanText[i];
+      const nextChar = cleanText[i + 1];
+
+      if (inQuotes) {
+        if (char === '"') {
+          if (nextChar === '"') {
+            currentField += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          currentField += char;
+        }
+      } else {
+        if (char === '"') {
+          inQuotes = true;
+        } else if (char === delimiter) {
+          currentRow.push(currentField.trim());
+          currentField = '';
+        } else if (char === '\r') {
+          // ignore CR
+        } else if (char === '\n') {
+          currentRow.push(currentField.trim());
+          if (currentRow.some((f) => f.length > 0)) {
+            rows.push(currentRow);
+          }
+          currentRow = [];
+          currentField = '';
+        } else {
+          currentField += char;
+        }
+      }
+    }
+
+    if (currentField.length > 0 || currentRow.length > 0) {
+      currentRow.push(currentField.trim());
+      if (currentRow.some((f) => f.length > 0)) {
+        rows.push(currentRow);
+      }
+    }
+
+    return rows;
+  };
+
   // CSV Export
   const handleExportCsv = () => {
     if (inventory.length === 0) {
@@ -40,28 +104,50 @@ export const SetupView: React.FC<SetupViewProps> = ({
       return;
     }
 
-    const headers = ['ID', 'Name', 'MHD', 'Ort', 'Menge', 'BildURL', 'GruppenID'];
+    const headers = [
+      'ID',
+      'Name',
+      'MHD',
+      'Ort',
+      'Menge',
+      'Kategorie',
+      'KategorieIcon',
+      'Barcode',
+      'BildURL',
+      'Geöffnet',
+      'Einlagerung',
+      'GruppenID',
+    ];
+
     const rows = inventory.map((item) => [
       item.id,
-      `"${item.name.replace(/"/g, '""')}"`,
+      item.name,
       item.mhd,
-      `"${item.location}"`,
+      item.location,
       item.quantity,
-      `"${item.imageUrl || ''}"`,
-      item.groupId,
+      item.category || '',
+      item.categoryIcon || '',
+      item.barcode || '',
+      item.imageUrl || '',
+      item.isOpen ? '1' : '0',
+      item.isEinlagerung ? '1' : '0',
+      item.groupId || '',
     ]);
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const csvContent = [
+      headers.map(escapeCsvCell).join(';'),
+      ...rows.map((row) => row.map(escapeCsvCell).join(';')),
+    ].join('\r\n');
 
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.href = url;
     link.setAttribute('download', `kuehlschrank_export_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
-    link.remove();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
     setExportMessage('CSV erfolgreich heruntergeladen!');
     setTimeout(() => setExportMessage(null), 3000);
@@ -76,24 +162,49 @@ export const SetupView: React.FC<SetupViewProps> = ({
     reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
-        const lines = text.split('\n').filter((l) => l.trim().length > 0);
-        if (lines.length <= 1) {
-          alert('CSV Datei enthält keine Daten.');
+        const parsedRows = parseCsvText(text);
+
+        if (parsedRows.length <= 1) {
+          alert('CSV Datei enthält keine gültigen Artikeldaten.');
           return;
         }
 
+        const headerRow = parsedRows[0].map((h) => h.toLowerCase().trim());
+        const getIdx = (key: string, fallbackIdx: number) => {
+          const idx = headerRow.findIndex((h) => h.includes(key));
+          return idx >= 0 ? idx : fallbackIdx;
+        };
+
+        const idIdx = getIdx('id', 0);
+        const nameIdx = getIdx('name', 1);
+        const mhdIdx = getIdx('mhd', 2);
+        const locIdx = getIdx('ort', 3);
+        const qtyIdx = getIdx('menge', 4);
+        const catIdx = getIdx('kategorie', 5);
+        const catIconIdx = getIdx('kategorieicon', 6);
+        const barcodeIdx = getIdx('barcode', 7);
+        const imgIdx = getIdx('bildurl', 8);
+        const openIdx = getIdx('geöffnet', 9);
+        const einlagerungIdx = getIdx('einlagerung', 10);
+        const groupIdx = getIdx('gruppenid', 11);
+
         const newItems: InventoryItem[] = [];
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(',').map((c) => c.replace(/^"|"$/g, '').trim());
-          if (cols.length >= 4) {
+        for (let i = 1; i < parsedRows.length; i++) {
+          const cols = parsedRows[i];
+          if (cols.length >= 2 && cols[nameIdx]) {
             newItems.push({
-              id: cols[0] || `inv-imp-${Date.now()}-${i}`,
-              name: cols[1] || 'Unbekannter Artikel',
-              mhd: cols[2] || new Date().toISOString().split('T')[0],
-              location: cols[3] || 'Kühlschrank',
-              quantity: parseInt(cols[4], 10) || 1,
-              imageUrl: cols[5] || '',
-              groupId: cols[6] || 'group-1',
+              id: cols[idIdx] || `inv-imp-${Date.now()}-${i}`,
+              name: cols[nameIdx] || 'Unbekannter Artikel',
+              mhd: cols[mhdIdx] || new Date().toISOString().split('T')[0],
+              location: cols[locIdx] || 'Kühlschrank',
+              quantity: parseInt(cols[qtyIdx], 10) || 1,
+              category: cols[catIdx] || undefined,
+              categoryIcon: cols[catIconIdx] || undefined,
+              barcode: cols[barcodeIdx] || undefined,
+              imageUrl: cols[imgIdx] || '',
+              isOpen: cols[openIdx] === '1' || cols[openIdx]?.toLowerCase() === 'true',
+              isEinlagerung: cols[einlagerungIdx] === '1' || cols[einlagerungIdx]?.toLowerCase() === 'true',
+              groupId: cols[groupIdx] || 'group-1',
             });
           }
         }
@@ -101,10 +212,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
         if (newItems.length > 0) {
           setInventory((prev) => [...newItems, ...prev]);
           alert(`${newItems.length} Artikel erfolgreich importiert!`);
+        } else {
+          alert('Keine gültigen Daten in der CSV gefunden.');
         }
       } catch (err) {
         alert('Fehler beim Einlesen der CSV-Datei.');
       }
+      // Reset input value so re-importing same file works
+      e.target.value = '';
     };
     reader.readAsText(file);
   };
@@ -172,7 +287,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </span>
           </div>
           <input
-            type="tel"
+            type="text"
             inputMode="numeric"
             pattern="[0-9]*"
             value={settings.daysOrangeExpiry}
@@ -195,7 +310,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </span>
           </div>
           <input
-            type="tel"
+            type="text"
             inputMode="numeric"
             pattern="[0-9]*"
             value={settings.daysRedExpiry ?? 3}
@@ -218,7 +333,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </span>
           </div>
           <input
-            type="tel"
+            type="text"
             inputMode="numeric"
             pattern="[0-9]*"
             value={settings.daysOrangeInFridge ?? 5}
@@ -241,7 +356,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </span>
           </div>
           <input
-            type="tel"
+            type="text"
             inputMode="numeric"
             pattern="[0-9]*"
             value={settings.daysRedInFridge ?? 10}

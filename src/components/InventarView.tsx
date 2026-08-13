@@ -448,12 +448,12 @@ export const InventarView: React.FC<InventarViewProps> = ({
                       <span className="text-[#8f9d8e]">{item.location}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className={getMhdColorClass(item)}>{getMhdDisplayText(item)}</span>
                       {item.isOpen && (
                         <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 shrink-0">
                           🔓 Offen
                         </span>
                       )}
+                      <span className={getMhdColorClass(item)}>{getMhdDisplayText(item)}</span>
                     </div>
                   </div>
                 ))}

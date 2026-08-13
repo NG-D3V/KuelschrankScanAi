@@ -798,9 +798,8 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                 <div className="flex items-center justify-between gap-3 w-full">
                   <input
                     ref={mhdInputRef}
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
+                    type="text"
+                    inputMode="decimal"
                     value={mhdInputText}
                     onFocus={(e) => e.target.select()}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); handleMhdTextBlur(); } }}
