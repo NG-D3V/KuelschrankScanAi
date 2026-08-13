@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Group } from '../types';
-import { Pencil, Trash2, Smartphone, Plus, UserPlus, X } from 'lucide-react';
+import { Pencil, Trash2, Smartphone, Cloud, Plus, UserPlus, X } from 'lucide-react';
 
 interface GruppeViewProps {
   groups: Group[];
@@ -57,6 +57,7 @@ export const GruppeView: React.FC<GruppeViewProps> = ({ groups, setGroups }) => 
       name: joinCodeInput.trim(),
       isCurrent: true,
       locations: ['Kühlschrank', 'Gefrierfach', 'Vorrat'],
+      isJoined: true,
     };
 
     setGroups((prev) => [
@@ -193,8 +194,12 @@ export const GruppeView: React.FC<GruppeViewProps> = ({ groups, setGroups }) => 
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 text-[#a4ef72]">
-                  <Smartphone className="w-4 h-4" />
+                <div className="flex items-center gap-2">
+                  {group.isJoined ? (
+                    <Cloud className="w-4 h-4 text-cyan-400" />
+                  ) : (
+                    <Smartphone className="w-4 h-4 text-[#a4ef72]" />
+                  )}
                 </div>
               </div>
             );
@@ -303,6 +308,8 @@ export const GruppeView: React.FC<GruppeViewProps> = ({ groups, setGroups }) => 
                 required
                 placeholder="Gruppenname (z.B. Ferienwohnung)"
                 value={groupInputName}
+                onFocus={(e) => e.target.select()}
+                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                 onChange={(e) => setGroupInputName(e.target.value)}
                 className="w-full bg-[#161a16] border border-[#3e4d3c] rounded-2xl px-4 py-3 text-sm text-[#f0f4ef] focus:outline-none focus:border-[#9fe870]"
               />
@@ -334,6 +341,8 @@ export const GruppeView: React.FC<GruppeViewProps> = ({ groups, setGroups }) => 
                 required
                 placeholder="Gruppen-Name oder Einladungscode"
                 value={joinCodeInput}
+                onFocus={(e) => e.target.select()}
+                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                 onChange={(e) => setJoinCodeInput(e.target.value)}
                 className="w-full bg-[#161a16] border border-[#3e4d3c] rounded-2xl px-4 py-3 text-sm text-[#f0f4ef] focus:outline-none focus:border-[#9fe870]"
               />
@@ -365,6 +374,8 @@ export const GruppeView: React.FC<GruppeViewProps> = ({ groups, setGroups }) => 
                 required
                 placeholder="Ortsname (z.B. Keller, Gemüseschublade)"
                 value={locationInputName}
+                onFocus={(e) => e.target.select()}
+                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                 onChange={(e) => setLocationInputName(e.target.value)}
                 className="w-full bg-[#161a16] border border-[#3e4d3c] rounded-2xl px-4 py-3 text-sm text-[#f0f4ef] focus:outline-none focus:border-[#9fe870]"
               />

@@ -19,6 +19,7 @@ export interface Group {
   name: string;
   isCurrent: boolean;
   locations: string[];
+  isJoined?: boolean;
 }
 
 export interface AppSettings {

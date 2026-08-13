@@ -172,11 +172,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </span>
           </div>
           <input
-            type="number"
+            type="tel"
             inputMode="numeric"
             pattern="[0-9]*"
-            min="1"
-            max="60"
             value={settings.daysOrangeExpiry}
             onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
@@ -197,11 +195,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </span>
           </div>
           <input
-            type="number"
+            type="tel"
             inputMode="numeric"
             pattern="[0-9]*"
-            min="0"
-            max="30"
             value={settings.daysRedExpiry ?? 3}
             onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
@@ -222,11 +218,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </span>
           </div>
           <input
-            type="number"
+            type="tel"
             inputMode="numeric"
             pattern="[0-9]*"
-            min="1"
-            max="60"
             value={settings.daysOrangeInFridge ?? 5}
             onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
@@ -247,11 +241,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </span>
           </div>
           <input
-            type="number"
+            type="tel"
             inputMode="numeric"
             pattern="[0-9]*"
-            min="1"
-            max="90"
             value={settings.daysRedInFridge ?? 10}
             onFocus={(e) => e.target.select()}
             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}

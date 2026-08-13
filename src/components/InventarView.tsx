@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { InventoryItem, Group, AppSettings } from '../types';
-import { Search, AlertTriangle, MapPin, Plus, Minus, Trash2, X, ArrowUpDown, Barcode } from 'lucide-react';
+import { Search, AlertTriangle, MapPin, Plus, Minus, Trash2, X, ArrowUpDown, Barcode, Smartphone, Cloud } from 'lucide-react';
 
 interface InventarViewProps {
   inventory: InventoryItem[];
@@ -47,10 +47,15 @@ export const InventarView: React.FC<InventarViewProps> = ({
         if (sortType === 'name-asc') return a.name.localeCompare(b.name);
         if (sortType === 'name-desc') return b.name.localeCompare(a.name);
 
-        const timeA = new Date(a.mhd).getTime();
-        const timeB = new Date(b.mhd).getTime();
-        if (sortType === 'mhd-asc') return timeA - timeB;
-        if (sortType === 'mhd-desc') return timeB - timeA;
+        if (sortType === 'mhd-asc' || sortType === 'mhd-desc') {
+          // Open items always come first when sorting by MHD
+          if (a.isOpen && !b.isOpen) return -1;
+          if (!a.isOpen && b.isOpen) return 1;
+
+          const timeA = new Date(a.mhd).getTime();
+          const timeB = new Date(b.mhd).getTime();
+          return sortType === 'mhd-asc' ? timeA - timeB : timeB - timeA;
+        }
         return 0;
       });
   }, [groupItems, searchQuery, selectedLocation, selectedCategory, sortType]);
@@ -59,16 +64,24 @@ export const InventarView: React.FC<InventarViewProps> = ({
   const today = useMemo(() => new Date(), []);
   const orangeDays = typeof settings.daysOrangeExpiry === 'number' ? settings.daysOrangeExpiry : 7;
   const redDays = typeof settings.daysRedExpiry === 'number' ? settings.daysRedExpiry : 3;
+  const orangeLimitInFridge = typeof settings.daysOrangeInFridge === 'number' ? settings.daysOrangeInFridge : 5;
 
   const warningItems = useMemo(() => {
     const todayMs = today.getTime();
     return groupItems.filter((item) => {
-      if (item.isEinlagerung) return false;
+      if (item.isOpen) return true; // Open products are always in the expiry warning list
+
+      if (item.isEinlagerung) {
+        const eDate = new Date(item.mhd);
+        const diffDaysInFridge = Math.floor((todayMs - eDate.getTime()) / (1000 * 3600 * 24));
+        return diffDaysInFridge >= orangeLimitInFridge;
+      }
+
       const mhdDate = new Date(item.mhd);
       const diffDays = Math.ceil((mhdDate.getTime() - todayMs) / (1000 * 3600 * 24));
       return diffDays <= orangeDays;
     });
-  }, [groupItems, today, orangeDays]);
+  }, [groupItems, today, orangeDays, orangeLimitInFridge]);
 
   const getMhdColorClass = (item: InventoryItem) => {
     if (item.isEinlagerung) {
@@ -90,7 +103,7 @@ export const InventarView: React.FC<InventarViewProps> = ({
 
     if (diffDays <= redDays) {
       return 'text-rose-400 font-bold';
-    } else if (diffDays <= orangeDays) {
+    } else if (diffDays <= orangeDays || item.isOpen) {
       return 'text-amber-400 font-bold';
     }
     return 'text-[#8f9d8e]';
@@ -153,7 +166,11 @@ export const InventarView: React.FC<InventarViewProps> = ({
       {/* Top Bar */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-2 text-[#f0f4ef] font-black text-xl tracking-tight">
-          <span className="text-xl">📱</span>
+          {currentGroup.isJoined ? (
+            <Cloud className="w-6 h-6 text-cyan-400 shrink-0" />
+          ) : (
+            <Smartphone className="w-6 h-6 text-[#9fe870] shrink-0" />
+          )}
           <h2>{currentGroup.name}</h2>
         </div>
 
@@ -289,14 +306,13 @@ export const InventarView: React.FC<InventarViewProps> = ({
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
         <button
           onClick={() => setSelectedCategory(null)}
-          className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1 cursor-pointer shrink-0 ${
+          className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
             !selectedCategory
               ? 'bg-[#1e4e12] text-[#9fe870] border border-[#9fe870] shadow-sm'
               : 'bg-[#232a23] text-[#c2cebf] border border-[#2e372e] hover:bg-[#283028]'
           }`}
         >
-          <span>🏷️</span>
-          <span>Alle Kat.</span>
+          Alle
         </button>
 
         {categoryFilters.map((cat) => {
@@ -425,13 +441,20 @@ export const InventarView: React.FC<InventarViewProps> = ({
                 {warningItems.map((item, index) => (
                   <div
                     key={item.id || `warning-${index}`}
-                    className="p-3 bg-[#171b17] rounded-2xl flex items-center justify-between text-xs"
+                    className="p-3 bg-[#171b17] rounded-2xl flex items-center justify-between text-xs gap-2"
                   >
                     <div>
                       <span className="font-bold text-[#f0f4ef] block">{item.name}</span>
                       <span className="text-[#8f9d8e]">{item.location}</span>
                     </div>
-                    <span className={getMhdColorClass(item)}>{getMhdDisplayText(item)}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={getMhdColorClass(item)}>{getMhdDisplayText(item)}</span>
+                      {item.isOpen && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 shrink-0">
+                          🔓 Offen
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -545,7 +568,9 @@ export const InventarView: React.FC<InventarViewProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#8f9d8e] mb-1 block">MHD</label>
+                <label className="text-xs font-bold text-[#8f9d8e] mb-1 block">
+                  {editingItem.isEinlagerung ? 'Tage im Kühlschrank (Einlagerungsdatum)' : 'MHD'}
+                </label>
                 <input
                   type="date"
                   required

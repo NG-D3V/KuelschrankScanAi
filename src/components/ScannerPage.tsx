@@ -601,17 +601,6 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
 
             {captureTab === 'barcode' && (
               <div className="space-y-4">
-                {/* NATIVE ML KIT BUTTON IF AVAILABLE / ON CAPACITOR DEVICE */}
-                {hasNativeMlKit && (
-                  <button
-                    onClick={handleNativeMlKitScan}
-                    disabled={isAnalyzing}
-                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#9fe870] to-[#7bd844] text-[#122108] font-black text-sm hover:brightness-110 transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#9fe870]/20 active:scale-95"
-                  >
-                    <Zap className="w-5 h-5 fill-current" /> Native ML Kit Barcode Blitz-Scan
-                  </button>
-                )}
-
                 <div className="relative rounded-3xl overflow-hidden bg-black border border-[#2e372e] min-h-[250px] flex items-center justify-center">
                   <div id="step2-barcode-scanner" className="w-full h-full" />
                   {!isCameraActive && !isAnalyzing && (
@@ -809,12 +798,12 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                 <div className="flex items-center justify-between gap-3 w-full">
                   <input
                     ref={mhdInputRef}
-                    type="text"
+                    type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     value={mhdInputText}
                     onFocus={(e) => e.target.select()}
-                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); handleMhdTextBlur(); } }}
                     onChange={(e) => setMhdInputText(e.target.value)}
                     onBlur={handleMhdTextBlur}
                     placeholder="24.08.2026"
@@ -833,8 +822,9 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
               </div>
 
               {mhdOcrFeedback && (
-                <div className="p-3 rounded-xl bg-[#232a23] border border-[#3e4d3c] text-xs font-semibold text-[#9fe870]">
-                  {mhdOcrFeedback}
+                <div className="p-3 rounded-xl bg-[#232a23] border border-[#3e4d3c] text-xs font-semibold text-[#9fe870] flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#9fe870] shrink-0" />
+                  <span>{mhdOcrFeedback.replace(/^✅\s*/, '')}</span>
                 </div>
               )}
 
@@ -917,9 +907,9 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                     <button
                       type="button"
                       onClick={startMhdLiveCamera}
-                      className="w-full py-4 rounded-2xl bg-[#1e4e12] border border-[#a4ef72]/40 text-[#f0f4ef] font-bold text-sm hover:bg-[#256317] transition cursor-pointer flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#9fe870] to-[#7bd844] text-[#122108] font-black text-sm hover:brightness-110 transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#9fe870]/20 active:scale-95"
                     >
-                      <Camera className="w-5 h-5 text-[#9fe870]" /> 📷 Live-Kamera MHD-Fenster öffnen
+                      <Zap className="w-5 h-5 fill-current" /> ⚡ ML Blitz-Scan (MHD Kamera)
                     </button>
 
                     <label className="flex w-full py-3 rounded-2xl bg-[#232a23] border border-[#3e4d3c] text-[#8f9d8e] font-bold text-xs hover:text-[#f0f4ef] transition cursor-pointer flex items-center justify-center gap-2">
@@ -1016,11 +1006,11 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({
                   });
 
                   setMhdInputText('');
-                  setMhdOcrFeedback('✅ Artikel gespeichert! Gib nun das kürzere MHD für das weitere Produkt ein.');
+                  setMhdOcrFeedback('Artikel gespeichert!');
                 }}
                 className="w-full py-3.5 rounded-2xl bg-[#232a23] border border-[#3e4d3c] text-[#f0f4ef] font-bold text-xs hover:border-[#9fe870] transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
               >
-                <Plus className="w-4 h-4 text-[#9fe870]" /> Gleiches Produkt mit anderem MHD (kürzer)
+                <Plus className="w-4 h-4 text-[#9fe870]" /> Gleiches Produkt mit anderem MHD
               </button>
             </div>
           </div>

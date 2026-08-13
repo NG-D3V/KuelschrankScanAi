@@ -73,7 +73,27 @@ export default function App() {
           <ScannerPage
             onClose={() => setActiveTab('inventar')}
             onAddItem={(item) => {
-              setInventory((prev) => [...prev, { ...item, id: `inv-${Date.now()}` }]);
+              setInventory((prev) => {
+                const existingIndex = prev.findIndex(
+                  (existing) =>
+                    existing.groupId === item.groupId &&
+                    existing.location.toLowerCase() === item.location.toLowerCase() &&
+                    existing.name.trim().toLowerCase() === item.name.trim().toLowerCase() &&
+                    existing.mhd === item.mhd
+                );
+
+                if (existingIndex >= 0) {
+                  const updated = [...prev];
+                  const existing = updated[existingIndex];
+                  updated[existingIndex] = {
+                    ...existing,
+                    quantity: (existing.quantity || 1) + (item.quantity || 1),
+                  };
+                  return updated;
+                }
+
+                return [...prev, { ...item, id: `inv-${Date.now()}` }];
+              });
             }}
             settings={settings}
             currentLocations={currentGroup.locations}
